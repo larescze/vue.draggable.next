@@ -1,11 +1,7 @@
 import Sortable from "sortablejs";
 import { insertNodeAt, removeNode } from "./util/htmlHelper";
 import { console } from "./util/console";
-import {
-  getComponentAttributes,
-  createSortableOption,
-  getValidSortableEntries
-} from "./core/componentBuilderHelper";
+import { getComponentAttributes, createSortableOption, getValidSortableEntries } from "./core/componentBuilderHelper";
 import { computeComponentStructure } from "./core/renderHelper";
 import { events } from "./core/sortableEvents";
 import { h, defineComponent, nextTick } from "vue";
@@ -36,42 +32,42 @@ const props = {
   list: {
     type: Array,
     required: false,
-    default: null
+    default: null,
   },
   modelValue: {
     type: Array,
     required: false,
-    default: null
+    default: null,
   },
   itemKey: {
     type: [String, Function],
-    required: true
+    required: true,
   },
   clone: {
     type: Function,
-    default: original => {
+    default: (original) => {
       return original;
-    }
+    },
   },
   tag: {
     type: String,
-    default: "div"
+    default: "div",
   },
   move: {
     type: Function,
-    default: null
+    default: null,
   },
   componentData: {
     type: Object,
     required: false,
-    default: null
-  }
+    default: null,
+  },
 };
 
 const emits = [
   "update:modelValue",
   "change",
-  ...[...events.manageAndEmit, ...events.emit].map(evt => evt.toLowerCase())
+  ...[...events.manageAndEmit, ...events.emit].map((evt) => evt.toLowerCase()),
 ];
 
 const draggableComponent = defineComponent({
@@ -85,7 +81,7 @@ const draggableComponent = defineComponent({
 
   data() {
     return {
-      error: false
+      error: false,
     };
   },
 
@@ -97,7 +93,7 @@ const draggableComponent = defineComponent({
         $slots,
         tag,
         realList,
-        getKey
+        getKey,
       });
       this.componentStructure = componentStructure;
       const attributes = getComponentAttributes({ $attrs, componentData });
@@ -110,9 +106,7 @@ const draggableComponent = defineComponent({
 
   created() {
     if (this.list !== null && this.modelValue !== null) {
-      console.error(
-        "modelValue and list props are mutually exclusive! Please set one or another."
-      );
+      console.error("modelValue and list props are mutually exclusive! Please set one or another.");
     }
   },
 
@@ -127,10 +121,10 @@ const draggableComponent = defineComponent({
     const sortableOptions = createSortableOption({
       $attrs,
       callBackBuilder: {
-        manageAndEmit: event => manageAndEmit.call(this, event),
-        emit: event => emit.bind(this, event),
-        manage: event => manage.call(this, event)
-      }
+        manageAndEmit: (event) => manageAndEmit.call(this, event),
+        emit: (event) => emit.bind(this, event),
+        manage: (event) => manage.call(this, event),
+      },
     });
     const targetDomElement = $el.nodeType === 1 ? $el : $el.parentElement;
     this._sortable = new Sortable(targetDomElement, sortableOptions);
@@ -157,8 +151,8 @@ const draggableComponent = defineComponent({
       if (typeof itemKey === "function") {
         return itemKey;
       }
-      return element => element[itemKey];
-    }
+      return (element) => element[itemKey];
+    },
   },
 
   watch: {
@@ -170,8 +164,8 @@ const draggableComponent = defineComponent({
           _sortable.option(key, value);
         });
       },
-      deep: true
-    }
+      deep: true,
+    },
   },
 
   methods: {
@@ -200,13 +194,12 @@ const draggableComponent = defineComponent({
 
     spliceList() {
       // @ts-ignore
-      const spliceList = list => list.splice(...arguments);
+      const spliceList = (list) => list.splice(...arguments);
       this.alterList(spliceList);
     },
 
     updatePosition(oldIndex, newIndex) {
-      const updatePosition = list =>
-        list.splice(newIndex, 0, list.splice(oldIndex, 1)[0]);
+      const updatePosition = (list) => list.splice(newIndex, 0, list.splice(oldIndex, 1)[0]);
       this.alterList(updatePosition);
     },
 
@@ -225,16 +218,15 @@ const draggableComponent = defineComponent({
     },
 
     getVmIndexFromDomIndex(domIndex) {
-      return this.componentStructure.getVmIndexFromDomIndex(
-        domIndex,
-        this.targetDomElement
-      );
+      return this.componentStructure.getVmIndexFromDomIndex(domIndex, this.targetDomElement);
     },
 
     onDragStart(evt) {
       this.context = this.getUnderlyingVm(evt.item);
-      evt.item._underlying_vm_ = this.clone(this.context.element);
-      draggingElement = evt.item;
+      if (this.context) {
+        evt.item._underlying_vm_ = this.clone(this.context.element);
+        draggingElement = evt.item;
+      }
     },
 
     onDragAdd(evt) {
@@ -277,17 +269,11 @@ const draggableComponent = defineComponent({
       if (!relatedContext.element) {
         return 0;
       }
-      const domChildren = [...evt.to.children].filter(
-        el => el.style["display"] !== "none"
-      );
+      const domChildren = [...evt.to.children].filter((el) => el.style["display"] !== "none");
       const currentDomIndex = domChildren.indexOf(evt.related);
-      const currentIndex = relatedContext.component.getVmIndexFromDomIndex(
-        currentDomIndex
-      );
+      const currentIndex = relatedContext.component.getVmIndexFromDomIndex(currentDomIndex);
       const draggedInList = domChildren.indexOf(draggingElement) !== -1;
-      return draggedInList || !evt.willInsertAfter
-        ? currentIndex
-        : currentIndex + 1;
+      return draggedInList || !evt.willInsertAfter ? currentIndex : currentIndex + 1;
     },
 
     onDragMove(evt, originalEvent) {
@@ -300,20 +286,20 @@ const draggableComponent = defineComponent({
       const futureIndex = this.computeFutureIndex(relatedContext, evt);
       const draggedContext = {
         ...this.context,
-        futureIndex
+        futureIndex,
       };
       const sendEvent = {
         ...evt,
         relatedContext,
-        draggedContext
+        draggedContext,
       };
       return move(sendEvent, originalEvent);
     },
 
     onDragEnd() {
       draggingElement = null;
-    }
-  }
+    },
+  },
 });
 
 export default draggableComponent;
